@@ -11,6 +11,7 @@ import openood.utils.comm as comm
 
 from .bit import KNOWN_MODELS
 from .conf_branch_net import ConfBranchNet
+from .particul_net import ParticulNet
 from .csi_net import CSINet
 from .de_resnet18_256x256 import AttnBasicBlock, BN_layer, De_ResNet18_256x256
 from .densenet import DenseNet3
@@ -206,6 +207,13 @@ def get_network(network_config):
 
         backbone = get_network(network_config.backbone)
         net = ConfBranchNet(backbone=backbone, num_classes=num_classes)
+
+    elif network_config.name == 'particul_net':
+        print("#############################################################")
+        print(network_config)
+        print("#############################################################")
+        backbone = get_network(network_config.backbone)
+        net = ParticulNet(backbone=backbone, num_classes=num_classes, num_patterns=network_config.num_patterns)
 
     elif network_config.name == 'dsvdd':
         net = build_network(network_config.type)

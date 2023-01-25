@@ -1,5 +1,5 @@
 #!/bin/bash
-# sh scripts/ood/train_conf_branch.sh
+# sh scripts/ood/train_particul.sh
 
 PYTHONPATH='.':$PYTHONPATH \
 #srun -p dsta --mpi=pmi2 --gres=gpu:${GPU} -n1 \
