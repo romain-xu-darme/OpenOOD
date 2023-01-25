@@ -107,13 +107,13 @@ class ResNet18_64x64(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x, return_feature=False, return_feature_list=False):
+    def forward(self, x, return_feature=False, return_feature_list=False, return_feature_map=False):
         feature1 = F.relu(self.bn1(self.conv1(x)))
         feature2 = self.layer1(feature1)
         feature3 = self.layer2(feature2)
         feature4 = self.layer3(feature3)
-        feature5 = self.layer4(feature4)
-        feature5 = self.avgpool(feature5)
+        featurem = self.layer4(feature4)
+        feature5 = self.avgpool(featurem)
         feature = feature5.view(feature5.size(0), -1)
         logits_cls = self.fc(feature)
         feature_list = [feature1, feature2, feature3, feature4, feature5]
@@ -121,6 +121,8 @@ class ResNet18_64x64(nn.Module):
             return logits_cls, feature
         elif return_feature_list:
             return logits_cls, feature_list
+        elif return_feature_map:
+            return logits_cls, featurem
         else:
             return logits_cls
 

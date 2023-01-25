@@ -159,7 +159,7 @@ class DenseNet3(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
-    def forward(self, x, return_feature=False):
+    def forward(self, x, return_feature=False, return_feature_map=False):
         feature1 = self.conv1(x)
         feature2 = self.trans1(self.block1(feature1))
         feature3 = self.trans2(self.block2(feature2))
@@ -173,6 +173,8 @@ class DenseNet3(nn.Module):
         ]
         if return_feature:
             return logits_cls, feature_list
+        elif return_feature_map:
+            return logits_cls, feature5
         else:
             return logits_cls
 
