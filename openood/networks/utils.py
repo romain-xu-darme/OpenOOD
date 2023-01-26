@@ -209,9 +209,6 @@ def get_network(network_config):
         net = ConfBranchNet(backbone=backbone, num_classes=num_classes)
 
     elif network_config.name == 'particul_net':
-        print("#############################################################")
-        print(network_config)
-        print("#############################################################")
         backbone = get_network(network_config.backbone)
         net = ParticulNet(backbone=backbone, num_classes=num_classes, num_patterns=network_config.num_patterns)
 
