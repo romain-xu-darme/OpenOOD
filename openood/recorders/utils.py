@@ -9,6 +9,7 @@ from .dsvdd_recorder import DCAERecorder, DSVDDRecorder
 from .kdad_recorder import KdadRecorder
 from .opengan_recorder import OpenGanRecorder
 from .rd4ad_recorder import Rd4adRecorder
+from .particul_recorder import ParticulRecorder
 
 
 def get_recorder(config: Config):
@@ -23,6 +24,7 @@ def get_recorder(config: Config):
         'cutpaste': CutpasteRecorder,
         'ad': ADRecorder,
         'rd4ad': Rd4adRecorder,
+        'particul': ParticulRecorder,
     }
 
     return recorders[config.recorder.name](config)

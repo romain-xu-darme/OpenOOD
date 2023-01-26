@@ -1,114 +1,91 @@
 import torch
+import numpy as np
 import torch.nn as nn
-import torch.nn.functional as F
+from torch.utils.data.dataloader import DataLoader
 from torch.autograd import Variable
-from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
-
+from particul.od2.loss import ParticulOD2Loss
+from scipy.stats import logistic
 from openood.utils import Config
 
 
 class ParticulTrainer:
-    def __init__(self, net, train_loader, config: Config) -> None:
+    def __init__(self, net: nn.Module, train_loader: DataLoader, config: Config) -> None:
         self.train_loader = train_loader
         self.config = config
         self.net = net
-        self.prediction_criterion = nn.NLLLoss().cuda()
-        self.optimizer = torch.optim.SGD(
-            net.parameters(),
+        self.prediction_criterion = ParticulOD2Loss(
+            npatterns=net.num_patterns,
+            loc_ksize=config.trainer.loc_ksize,
+            unq_ratio=config.trainer.unq_ratio,
+            unq_thres=1.0,
+            cls_ratio=0.0,
+            cls_thres=0.0,
+        ).cuda()
+        self.optimizer = torch.optim.RMSprop(
+            net.particuls.parameters(),
             lr=config.optimizer['lr'],
-            momentum=config.optimizer['momentum'],
-            nesterov=config.optimizer['nesterov'],
             weight_decay=config.optimizer['weight_decay'])
-        self.scheduler = MultiStepLR(self.optimizer,
-                                     milestones=config.scheduler['milestones'],
-                                     gamma=config.scheduler['gamma'])
-        self.lmbda = self.config.trainer['lmbda']
 
-    def train_epoch(self, epoch_idx):
+    def train_epoch(self, epoch_idx: int):
         self.net.train()
-        correct_count = 0.
-        total = 0.
-        accuracy = 0.
-        train_dataiter = iter(self.train_loader)
+        self.net.backbone.eval()
 
-        for train_step in tqdm(range(1,
-                                     len(train_dataiter) + 1),
-                               desc='Epoch {:03d}'.format(epoch_idx),
-                               position=0,
-                               leave=True):
+        train_dataiter = iter(self.train_loader)
+        global_metrics = {key: 0 for key in self.prediction_criterion.metrics}
+
+        for _ in tqdm(range(1, len(train_dataiter) + 1), desc='Epoch {:03d}'.format(epoch_idx), position=0, leave=False):
             batch = next(train_dataiter)
             images = Variable(batch['data']).cuda()
             labels = Variable(batch['label']).cuda()
-            labels_onehot = Variable(
-                encode_onehot(labels, self.config.num_classes))
-            self.net.zero_grad()
 
-            pred_original, confidence = self.net(images,
-                                                 return_confidence=True)
-            pred_original = F.softmax(pred_original, dim=-1)
-            confidence = torch.sigmoid(confidence)
-            eps = self.config.trainer['eps']
-            pred_original = torch.clamp(pred_original, 0. + eps, 1. - eps)
-            confidence = torch.clamp(confidence, 0. + eps, 1. - eps)
+            pred_original, amaps = self.net(images, return_activation=True)
+            loss, metrics = self.prediction_criterion(labels[:, None], (pred_original, amaps))
 
-            if not self.config.baseline:
-                # Randomly set half of the confidences to 1 (i.e. no hints)
-                b = Variable(
-                    torch.bernoulli(
-                        torch.Tensor(confidence.size()).uniform_(0,
-                                                                 1))).cuda()
-                conf = confidence * b + (1 - b)
-                pred_new = pred_original * conf.expand_as(
-                    pred_original) + labels_onehot * (
-                        1 - conf.expand_as(labels_onehot))
-                pred_new = torch.log(pred_new)
-            else:
-                pred_new = torch.log(pred_original)
-
-            xentropy_loss = self.prediction_criterion(pred_new, labels)
-            confidence_loss = torch.mean(-torch.log(confidence))
-
-            if self.config.baseline:
-                total_loss = xentropy_loss
-            else:
-                total_loss = xentropy_loss + (self.lmbda * confidence_loss)
-
-                if self.config.trainer['budget'] > confidence_loss.item():
-                    self.lmbda = self.lmbda / 1.01
-                elif self.config.trainer['budget'] <= confidence_loss.item():
-                    self.lmbda = self.lmbda / 0.99
-
-            total_loss.backward()
+            # Backpropagation
+            self.optimizer.zero_grad()
+            loss.backward()
             self.optimizer.step()
 
-            pred_idx = torch.max(pred_original.data, 1)[1]
-            total += labels.size(0)
-            correct_count += (pred_idx == labels.data).sum()
-            accuracy = correct_count / total
-        self.scheduler.step()
-        metrics = {}
-        metrics['train_acc'] = accuracy
-        metrics['loss'] = total_loss
-        metrics['epoch_idx'] = epoch_idx
-        return self.net, metrics
+            # Update metrics
+            for val, key in zip(metrics, global_metrics):
+                global_metrics[key] += val
 
+        num_batch = len(train_dataiter)
+        for key in global_metrics:
+            global_metrics[key] /= num_batch
+        global_metrics['epoch_idx'] = epoch_idx
 
-def encode_onehot(labels, n_classes):
-    onehot = torch.FloatTensor(labels.size()[0],
-                               n_classes)  # batchsize * num of class
-    labels = labels.data
-    if labels.is_cuda:
-        onehot = onehot.cuda()
-    onehot.zero_()
-    onehot.scatter_(1, labels.view(-1, 1), 1)
-    return onehot
+        return self.net, global_metrics
 
+    def calibrate(self):
+        self.net.eval()
+        train_dataiter = iter(self.train_loader)
 
-"""
-[0,0,0,1,0,0,0,0,0,0]
-[0,0,0,0,0,0,0,1,0,0]
-[0,0,0,0,0,1,0,0,0,0]
-...
+        # Get max correlation scores for each image from the training set
+        max_scores = [[[] for _ in range(self.net.num_patterns)] for _ in range(self.net.num_classes)]
+        for batch in tqdm(train_dataiter,  desc='Calib: ', position=0, leave=False):
+            images = Variable(batch['data']).cuda()
+            labels = Variable(batch['label'])
 
-"""
+            # Compute prediction and correlation scores. Shape (N x C), (N x C x H x W x P)
+            _, amaps = self.net(images, return_activation=True)
+            amaps = amaps.detach().cpu().numpy()  # Shape N x C x P x H x W
+
+            # Recover maximum value of pattern correlations. Shape N x C x P
+            vmax = np.max(amaps, axis=(3, 4))
+
+            for v, label in zip(vmax, labels):
+                for p in range(self.net.num_patterns):
+                    max_scores[label][p].append(v[label, p])
+
+        for c in range(self.net.num_classes):
+            for p in range(self.net.num_patterns):
+                # Get mean and standard deviation of distribution
+                # of max correlation scores for a given pattern detector
+                mu, sigma = logistic.fit(max_scores[c][p])
+                # Update model distribution parameters
+                self.net.particuls[c].detectors[p].calibrate(mean=mu, std=sigma)
+
+        return self.net.cuda()
+

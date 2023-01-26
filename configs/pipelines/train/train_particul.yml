@@ -12,28 +12,22 @@ machine_rank: 0
 baseline: False
 
 pipeline:
-  name: train
+  name: train_particul # Dedicated training pipeline for learning detectors, then calibrating them
 
 trainer:
-  name: particul
-  budget: 0.3
-  lmbda: 0.1
-  eps: 1.0e-12
+  name: particul # Dedicated trainer
+  unq_ratio: 1.0
+  loc_ksize: 3
 
 evaluator:
-  name: base
+  name: particul # Dedicated evaluator (based on Particul loss)
 
 optimizer:
-  num_epochs: 200
-  lr: 0.1
-  momentum: 0.9
-  nesterov: True
-  weight_decay: 5.0e-4
+  num_epochs: 30
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
 
 recorder:
-  name: base
+  name: particul # Dedicated recorder (Particul loss information)
   save_all_models: False
 
-scheduler:
-  milestones: [80, 120] #[60,120,160] for cifar10, [80, 120] for svhn
-  gamma: 0.1 #0.2 for cifar10, 0.1 for svhn
