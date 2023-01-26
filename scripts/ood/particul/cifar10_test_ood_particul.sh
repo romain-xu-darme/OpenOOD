@@ -14,7 +14,9 @@ configs/pipelines/test/test_ood.yml \
 configs/preprocessors/base_preprocessor.yml \
 configs/postprocessors/particul.yml \
 --network.backbone.name resnet18_32x32 \
---network.backbone.pretrained False \
+--network.backbone.checkpoint 'results/checkpoints/cifar10_res18_acc94.30.ckpt' \
+--network.backbone.pretrained True \
 --network.pretrained True \
---network.checkpoint 'results/cifar10_particul_net_particul_e100_lr0.1/best.ckpt' \
+--network.num_patterns 2 \
+--network.checkpoint 'results/cifar10_particul_net_particul_e30_lr0.0005/best.ckpt' \
 --mark epoch_100
