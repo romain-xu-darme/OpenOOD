@@ -60,6 +60,9 @@ class ParticulTrainer:
 
     def calibrate(self):
         self.net.eval()
+        # Disable normalization on all Particul detectors (mandatory to avoid calibration on normalized values!!)
+        for particul in self.net.particuls:
+            particul.enable_normalization = False
         train_dataiter = iter(self.train_loader)
 
         # Get max correlation scores for each image from the training set
@@ -87,5 +90,8 @@ class ParticulTrainer:
                 # Update model distribution parameters
                 self.net.particuls[c].detectors[p].calibrate(mean=mu, std=sigma)
 
+        # Restore normalization
+        for particul in self.net.particuls:
+            particul.enable_normalization = True
         return self.net.cuda()
 
