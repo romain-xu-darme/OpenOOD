@@ -3,7 +3,7 @@ from particul.od2.layers import ClassWiseParticul
 from torch import Tensor
 from typing import Tuple, Union
 import torch
-
+import openood.networks.lenet
 
 class ParticulNet(nn.Module):
     def __init__(self, backbone: nn.Module, num_classes: int, num_patterns: int):
@@ -17,9 +17,11 @@ class ParticulNet(nn.Module):
         super(ParticulNet, self).__init__()
 
         self.backbone = backbone
+        # Small hack to get correct feature size for LeNet architecture
+        feature_size = 16 if isinstance(backbone, openood.networks.lenet.LeNet) else backbone.feature_size
         self.num_patterns = num_patterns
         self.num_classes = num_classes
-        self.particuls = nn.ModuleList([ClassWiseParticul(backbone.feature_size, num_patterns)
+        self.particuls = nn.ModuleList([ClassWiseParticul(feature_size, num_patterns)
                                        for _ in range(num_classes)])
 
         # Freeze classifier

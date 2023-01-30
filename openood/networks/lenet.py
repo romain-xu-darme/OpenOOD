@@ -38,8 +38,8 @@ class LeNet(nn.Module):
     def forward(self, x, return_feature=False, return_feature_list=False, return_feature_map=False):
         feature1 = self.block1(x)
         feature2 = self.block2(feature1)
-        featurem = self.block3(feature2)
-        feature3 = featurem.view(featurem.shape[0], -1)
+        feature3 = self.block3(feature2)
+        feature3 = feature3.view(feature3.shape[0], -1)
         feature = self.relu(self.classifier1(feature3))
         logits_cls = self.fc(feature)
         feature_list = [feature1, feature2, feature3, feature]
@@ -48,7 +48,7 @@ class LeNet(nn.Module):
         elif return_feature_list:
             return logits_cls, feature_list
         elif return_feature_map:
-            return logits_cls, featurem
+            return logits_cls, feature2
         else:
             return logits_cls
 
