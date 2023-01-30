@@ -12,7 +12,7 @@ configs/datasets/cifar100/cifar100_ood.yml \
 configs/networks/particul.yml \
 configs/pipelines/train/train_particul.yml \
 configs/preprocessors/base_preprocessor.yml \
---optimizer.num_epochs 60 \
+--optimizer.num_epochs 200 \
 --optimizer.lr 5.0e-4 \
 --optimizer.weight_decay 1.0e-5 \
 --network.backbone.name resnet18_32x32 \

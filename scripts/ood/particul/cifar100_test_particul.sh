@@ -17,5 +17,6 @@ configs/postprocessors/particul.yml \
 --network.backbone.checkpoint 'results/checkpoints/cifar10_res18_acc94.30.ckpt' \
 --network.backbone.pretrained True \
 --network.pretrained True \
---network.checkpoint 'results/cifar100_particul_net_particul_e60_lr0.0005/best.ckpt' \
---network.num_patterns 4
+--network.checkpoint "${1}/best.ckpt" \
+--network.num_patterns 4 \
+--mark "${2}"
