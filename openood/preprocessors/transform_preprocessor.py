@@ -5,7 +5,7 @@ from openood.utils.config import Config
 
 from .transform import Convert, interpolation_modes, normalization_dict
 
-supported_perturbations = ['noise']
+supported_perturbations = ['noise', 'blur']
 
 class GaussianNoise:
     def __init__(self, ratio):
@@ -35,7 +35,8 @@ class TransformPreprocessor():
 
         # Build list of operations
         ops = [Convert('RGB'), tvs_trans.Resize(self.pre_size, interpolation=self.interpolation)]
-
+        if pert_name == 'blur' and magnitude > 0.0:
+            ops.append(tvs_trans.GaussianBlur(kernel_size=3, sigma=magnitude))
         ops += [
             tvs_trans.CenterCrop(self.image_size),
             tvs_trans.ToTensor(),
