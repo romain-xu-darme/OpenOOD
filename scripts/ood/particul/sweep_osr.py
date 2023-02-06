@@ -2,13 +2,17 @@
 import os
 
 osr_configs = [
-    # ['mnist6', 'lenet'],
+    ['mnist6', 'lenet'],
     ['cifar6', 'resnet18_32x32'],
     ['cifar50', 'resnet18_32x32'],
     ['tin20', 'resnet18_64x64'],
 ]
 lr = "0.0005"
-num_epochs = 1
+num_epochs = 200
+mark = 'p4k3'
+
+# Merge results
+output = 'results/osr_ood.csv'
 
 for name, arch in osr_configs:
     for seed in range(1, 6):
@@ -46,6 +50,16 @@ for name, arch in osr_configs:
             --network.pretrained True \
             --network.checkpoint './results/{name}_seed{seed}_particul_net_particul_e{num_epochs}_lr{lr}/best.ckpt' \
             --network.num_patterns 4 \
+            --mark {mark} \
             --merge_option merge"
         os.system(command)
 
+        with open(output, 'a') as fout:
+            fname = f'./results/{name}_seed{seed}_particul_net_test_ood_osr_particul_{mark}/ood.csv'
+            with open(fname, 'r') as fin:
+                lines = fin.readlines()
+                fout.write(f"{fname},{seed},{lines[1]}")
+
+    # Add additional line to insert average values
+    with open(output, 'a') as fout:
+        fout.write('\n')
