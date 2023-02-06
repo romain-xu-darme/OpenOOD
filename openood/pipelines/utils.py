@@ -12,6 +12,7 @@ from .train_only_pipeline import TrainOpenGanPipeline
 from .train_pipeline import TrainPipeline
 from .test_ood_pipeline_aps import TestOODPipelineAPS
 from .train_particul_pipeline import TrainParticulPipeline
+from .test_pood_pipeline import TestPOODPipeline
 
 
 def get_pipeline(config: Config):
@@ -21,6 +22,7 @@ def get_pipeline(config: Config):
         'test_acc': TestAccPipeline,
         'feat_extract': FeatExtractPipeline,
         'test_ood': TestOODPipeline,
+        'test_pood': TestPOODPipeline,
         'test_ad': TestAdPipeline,
         'train_ad': TrainAdPipeline,
         'train_oe': TrainOEPipeline,

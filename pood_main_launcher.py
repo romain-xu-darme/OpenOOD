@@ -1,0 +1,73 @@
+import os
+
+dataset_configs = {
+	'cifar10': {
+		'yaml': "--config configs/datasets/cifar10/cifar10.yml configs/datasets/cifar10/cifar10_ood.yml",
+		'networks': {
+			'standard': {
+				'arch': 'configs/networks/resnet18_32x32.yml',
+				'ckpt': '--network.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" '
+						'--network.pretrained True ',
+			},
+			'particul': {
+				'arch': 'configs/networks/particul.yml',
+				'ckpt': '--network.checkpoint "results/cifar10_particul_net_particul_e200_lr0.0005_p4k3/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet18_32x32 '
+						'--network.backbone.checkpoint results/checkpoints/cifar10_res18_acc94.30.ckpt '
+						'--network.backbone.pretrained True '
+						'--network.num_patterns 4'
+			},
+			'vim': {
+				'arch': 'configs/networks/resnet18_32x32.yml',
+				'ckpt': '--network.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" '
+						'--network.pretrained True --postprocessor.postprocessor_args.dim 256 ',
+			},
+			'react': {
+				'arch': 'configs/networks/react_net.yml',
+				'ckpt': '--network.pretrained False '
+						'--network.backbone.name resnet18_32x32 '
+						'--network.backbone.pretrained True '
+						'--network.backbone.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" ',
+			}
+		},
+	},
+}
+
+pipeline = 'configs/pipelines/test/test_pood.yml configs/preprocessors/base_preprocessor.yml '
+
+method_config = {
+	'odin': {'network': 'standard', 'postprocessor': 'configs/postprocessors/odin.yml'},
+	'msp': {'network': 'standard', 'postprocessor': 'configs/postprocessors/msp.yml'},
+	'mds': {'network': 'standard', 'postprocessor': 'configs/postprocessors/mds.yml'},
+	'gram': {'network': 'standard', 'postprocessor': 'configs/postprocessors/gram.yml'},
+	'ebo': {'network': 'standard', 'postprocessor': 'configs/postprocessors/ebo.yml'},
+	'gradnorm': {'network': 'standard', 'postprocessor': 'configs/postprocessors/gradnorm.yml'},
+	'maxlogits': {'network': 'standard', 'postprocessor': 'configs/postprocessors/mls.yml'},
+	'klm': {'network': 'standard', 'postprocessor': 'configs/postprocessors/klm.yml'},
+	'knn': {'network': 'standard', 'postprocessor': 'configs/postprocessors/knn.yml'},
+	'dice': {'network': 'standard', 'postprocessor': 'configs/postprocessors/dice.yml'},
+	'react': {'network': 'react', 'postprocessor': 'configs/postprocessors/react.yml'},
+	'vim': {'network': 'vim', 'postprocessor': 'configs/postprocessors/vim.yml'},
+	'particul': {'network': 'particul', 'postprocessor': 'configs/postprocessors/particul.yml'}
+}
+
+perturbation_configs = {
+	'noise': "'[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]'",
+}
+
+methods = method_config.keys()
+datasets = ['cifar10']
+perturbations = ['noise']
+
+for dataset in datasets:
+	for perturbation in perturbations:
+		for method in methods:
+			network_config = dataset_configs[dataset]['networks'][method_config[method]['network']]
+			cmd_line = f"python main.py {dataset_configs[dataset]['yaml']} {network_config['arch']} {pipeline} "
+			cmd_line += f"{method_config[method]['postprocessor']} "
+			cmd_line += f"{network_config['ckpt']} "
+			cmd_line += f"--evaluator.perturbation {perturbation} "
+			cmd_line += f"--evaluator.magnitudes={perturbation_configs[perturbation]} "
+			cmd_line += f"--num_workers 8 --merge_option merge --mark {perturbation} --method {method}"
+			os.system(cmd_line)

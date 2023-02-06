@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 
 from openood.preprocessors.test_preprocessor import TestStandardPreProcessor
 from openood.preprocessors.utils import get_preprocessor
+from openood.preprocessors.transform_preprocessor import TransformPreprocessor
 from openood.utils.config import Config
 
 from .feature_dataset import FeatDataset
@@ -84,6 +85,36 @@ def get_ood_dataloader(config: Config):
                 sub_dataloader_dict[dataset_name] = dataloader
             dataloader_dict[split] = sub_dataloader_dict
 
+    return dataloader_dict
+
+
+def get_pood_dataloader(config: Config):
+    # prepare a dataloader dictionary
+    dataset_config = config.dataset
+    test_config = dataset_config['test']
+    CustomDataset = eval(test_config.dataset_class)
+    dataloader_dict = {}
+    for magnitude in config.evaluator.magnitudes:
+        preprocessor = TransformPreprocessor(config, magnitude)
+        data_aux_preprocessor = TestStandardPreProcessor(config)
+        dataset = CustomDataset(name=f'{dataset_config.name}_{config.evaluator.perturbation}@{magnitude}',
+                                imglist_pth=test_config.imglist_pth,
+                                data_dir=test_config.data_dir,
+                                num_classes=dataset_config.num_classes,
+                                preprocessor=preprocessor,
+                                data_aux_preprocessor=data_aux_preprocessor)
+        sampler = None
+        if dataset_config.num_gpus * dataset_config.num_machines > 1:
+            sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+            dataset_config.shuffle = False
+
+        dataloader = DataLoader(dataset,
+                                batch_size=test_config.batch_size,
+                                shuffle=test_config.shuffle,
+                                num_workers=dataset_config.num_workers,
+                                sampler=sampler)
+
+        dataloader_dict[magnitude] = dataloader
     return dataloader_dict
 
 

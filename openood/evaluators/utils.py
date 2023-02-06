@@ -10,12 +10,14 @@ from .ood_evaluator import OODEvaluator
 from .osr_evaluator import OSREvaluator
 from .patchcore_evaluator import PatchCoreEvaluator
 from .particul_evaluator import ParticulEvaluator
+from .pood_evaluator import POODEvaluator
 
 
 def get_evaluator(config: Config):
     evaluators = {
         'base': BaseEvaluator,
         'ood': OODEvaluator,
+        'pood': POODEvaluator,
         'fsood': FSOODEvaluator,
         'patch': PatchCoreEvaluator,
         'arpl': ARPLEvaluator,
