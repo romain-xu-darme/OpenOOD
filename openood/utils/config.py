@@ -1,4 +1,5 @@
 import argparse
+import ast
 import os
 import re
 
@@ -235,6 +236,8 @@ class Config(dict):
                     'False': False,
                     '0': False,
                 }[value_str]
+            elif value_type is list:
+                self[key] = ast.literal_eval(value_str)
             else:
                 self[key] = value_type(value_str)
 
