@@ -54,11 +54,12 @@ method_config = {
 
 perturbation_configs = {
 	'noise': "'[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]'",
+	'blur': "'[0.0, 0.1, 0.3, 0.5, 0.7, 1.0, 2.0, 5.0, 10.0]'",
 }
 
 methods = method_config.keys()
 datasets = ['cifar10']
-perturbations = ['noise']
+perturbations = perturbation_configs.keys()
 
 for dataset in datasets:
 	for perturbation in perturbations:
