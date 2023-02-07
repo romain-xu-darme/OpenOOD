@@ -39,7 +39,7 @@ class TestPOODPipeline:
         print('Time used for eval_pood: {:.0f}s'.format(time.time() - timer))
         print('Completed!', flush=True)
 
-        csv_path = os.path.join('results/pood/', 'test_pood.csv')
+        csv_path = os.path.join('results/pood/', 'pood_results.csv')
         write_content = {
             'dataset': self.config.dataset.name,
             'method': self.config.method,

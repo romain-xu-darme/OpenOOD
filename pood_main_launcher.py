@@ -105,7 +105,7 @@ method_config = {
 	'gram': {'network': 'standard', 'postprocessor': 'configs/postprocessors/gram.yml'},
 	'ebo': {'network': 'standard', 'postprocessor': 'configs/postprocessors/ebo.yml'},
 	'gradnorm': {'network': 'standard', 'postprocessor': 'configs/postprocessors/gradnorm.yml'},
-	'maxlogits': {'network': 'standard', 'postprocessor': 'configs/postprocessors/mls.yml'},
+	'mls': {'network': 'standard', 'postprocessor': 'configs/postprocessors/mls.yml'},
 	'klm': {'network': 'standard', 'postprocessor': 'configs/postprocessors/klm.yml'},
 	'knn': {'network': 'standard', 'postprocessor': 'configs/postprocessors/knn.yml'},
 	'dice': {'network': 'standard', 'postprocessor': 'configs/postprocessors/dice.yml'},
