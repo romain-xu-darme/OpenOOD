@@ -39,12 +39,13 @@ class TestPOODPipeline:
         print('Time used for eval_pood: {:.0f}s'.format(time.time() - timer))
         print('Completed!', flush=True)
 
-        csv_path = os.path.join('results','test_pood.csv')
+        csv_path = os.path.join('results/pood/', 'test_pood.csv')
         write_content = {
+            'dataset': self.config.dataset.name,
             'method': self.config.method,
-            'perturbation': self.config.evaluator.perturbation,
-            'Spearman': round(score[0],2),
-            'p-value': round(score[1],3)
+            'perturbation': self.config.mark,
+            'Spearman': round(score[0], 2),
+            'p-value': round(score[1], 3)
         }
         field_names = write_content.keys()
         if not os.path.exists(csv_path):

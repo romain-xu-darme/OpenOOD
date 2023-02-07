@@ -1,5 +1,5 @@
 exp_name: "'@{postprocessor.name}'"
-output_dir: "./results/'@{mark}'/'@{dataset.name}'/"
+output_dir: "./results/pood/'@{mark}'/'@{dataset.name}'/"
 save_output: True
 merge_option: default # disabled if 'save_output' is False
 mark: default # to mark the version of experiment
