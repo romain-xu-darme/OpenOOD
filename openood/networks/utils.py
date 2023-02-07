@@ -212,6 +212,9 @@ def get_network(network_config):
         backbone = get_network(network_config.backbone)
         net = FNRDNet(backbone=backbone)
 
+    elif network_config.name == 'fnrd_net':
+        backbone = get_network(network_config.backbone)
+        net = FNRDNet(backbone=backbone)
     elif network_config.name == 'dsvdd':
         net = build_network(network_config.type)
 
@@ -250,6 +253,14 @@ def get_network(network_config):
             net.load_from(np.load(network_config.checkpoint))
         elif network_config.name == 'vit':
             pass
+        elif network_config.name == 'fnrd_net':
+            net.load_state_dict(
+                    torch.load(network_config.checkpoint),
+                    strict=True)
+            net.backbone.load_state_dict(
+                    torch.load(network_config.backbone.checkpoint),
+                    strict=True)
+
         else:
             try:
                 net.load_state_dict(torch.load(network_config.checkpoint),

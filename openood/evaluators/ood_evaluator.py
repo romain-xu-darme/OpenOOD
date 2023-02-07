@@ -7,6 +7,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from openood.postprocessors import BasePostprocessor
+from openood.postprocessors import FNRDPostprocessor
 from openood.utils import Config
 
 from .base_evaluator import BaseEvaluator
