@@ -31,12 +31,23 @@ class ImglistDataset(BaseDataset):
                  maxlen=None,
                  dummy_read=False,
                  dummy_size=None,
+                 class_idx=None,
                  **kwargs):
         super(ImglistDataset, self).__init__(**kwargs)
 
         self.name = name
         with open(imglist_pth) as imgfile:
             self.imglist = imgfile.readlines()
+            if class_idx is not None:
+                print(f'Selecting samples from class {class_idx} only. Original size: {len(self.imglist)}')
+                # Keep entries corresponding to the class index only
+                class_imglist = []
+                for line in self.imglist:
+                    label = int(line.strip('\n').split(' ', 1)[1])
+                    if label == class_idx:
+                        class_imglist.append(line)
+                self.imglist = class_imglist
+                print(f'New dataset size: {len(self.imglist)}')
         self.data_dir = data_dir
         self.num_classes = num_classes
         self.preprocessor = preprocessor

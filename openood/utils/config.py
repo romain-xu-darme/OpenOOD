@@ -1,4 +1,5 @@
 import argparse
+import ast
 import os
 import re
 
@@ -131,7 +132,9 @@ class Config(dict):
 
     # access by '.' -> access by '[]'
     def __getattr__(self, key):
-        return self[key]
+        if key in self.keys():
+            return self[key]
+        return None
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -235,6 +238,8 @@ class Config(dict):
                     'False': False,
                     '0': False,
                 }[value_str]
+            elif value_type is list:
+                self[key] = ast.literal_eval(value_str)
             else:
                 self[key] = value_type(value_str)
 

@@ -1,0 +1,27 @@
+exp_name: "'@{postprocessor.name}'"
+output_dir: "./results/pood/'@{mark}'/'@{dataset.name}'/"
+save_output: True
+merge_option: default # disabled if 'save_output' is False
+mark: default # to mark the version of experiment
+
+num_gpus: 1
+num_workers: 0
+num_machines: 1
+machine_rank: 0
+
+method: default
+
+network:
+  pretrained: True
+
+pipeline:
+  name: test_pood
+
+evaluator:
+  name: pood
+  perturbation: noise
+  magnitudes: [0.0 , 1.0]
+
+recorder:
+  save_scores: True
+  save_csv: True

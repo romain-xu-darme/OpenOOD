@@ -87,6 +87,7 @@ class ParticulTrainer:
                 # Get mean and standard deviation of distribution
                 # of max correlation scores for a given pattern detector
                 mu, sigma = logistic.fit(max_scores[c][p])
+                assert sigma > 0, "Something went really wrong here"
                 # Update model distribution parameters
                 self.net.particuls[c].detectors[p].calibrate(mean=mu, std=sigma)
 
