@@ -22,10 +22,16 @@ def get_dataloader(config: Config):
         # weak augmentation for data_aux
         data_aux_preprocessor = TestStandardPreProcessor(config)
         CustomDataset = eval(split_config.dataset_class)
+
+        # -1 is the code for all classes
+        if dataset_config.class_idx == -1:
+            dataset_config.class_idx = None
+
         dataset = CustomDataset(name=dataset_config.name + '_' + split,
                                 imglist_pth=split_config.imglist_pth,
                                 data_dir=split_config.data_dir,
                                 num_classes=dataset_config.num_classes,
+                                class_idx=dataset_config.class_idx,
                                 preprocessor=preprocessor,
                                 data_aux_preprocessor=data_aux_preprocessor)
         sampler = None
