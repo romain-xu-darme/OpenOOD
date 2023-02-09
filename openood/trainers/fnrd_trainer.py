@@ -49,6 +49,7 @@ class FNRDTrainer:
             labels = Variable(batch["label"]).cuda()
             self.net.zero_grad()
 
+
             pred_original, feature_list = self.net.backbone(
                 images, return_feature_list=True
             )

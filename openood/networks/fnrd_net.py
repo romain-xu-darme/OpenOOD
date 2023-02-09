@@ -1,5 +1,6 @@
 from openood.networks.lenet import LeNet
 from openood.networks.resnet18_32x32 import ResNet18_32x32
+
 import torch.nn as nn
 from torch import Tensor
 from typing import Tuple, Union
@@ -16,6 +17,7 @@ class FNRDNet(nn.Module):
         super(FNRDNet, self).__init__()
 
         self.backbone = backbone
+
         if isinstance(backbone, LeNet):
             mask_size = 1780
         elif isinstance(backbone, ResNet18_32x32):
@@ -28,6 +30,7 @@ class FNRDNet(nn.Module):
         self.min_mask = nn.Parameter(
             torch.empty(mask_size, dtype=torch.float, device="cuda")
         )
+
 
     def forward(
         self,
@@ -43,6 +46,7 @@ class FNRDNet(nn.Module):
             Prediction and confidence scores if return_confidence is True, prediction only otherwise
         """
         pred, feature_list = self.backbone(x, return_feature_list=True)
+
         outliers = torch.Tensor()
         n_batch = feature_list[0].size(0)
         activations = [f.view(n_batch, -1) for f in feature_list]
@@ -55,6 +59,7 @@ class FNRDNet(nn.Module):
                 (outliers, torch.Tensor([max_outliers + min_outliers]))
             )
         cfd = outliers
+
         if return_confidence:
             return pred, cfd
         else:

@@ -212,9 +212,6 @@ def get_network(network_config):
         backbone = get_network(network_config.backbone)
         net = FNRDNet(backbone=backbone)
 
-    elif network_config.name == 'fnrd_net':
-        backbone = get_network(network_config.backbone)
-        net = FNRDNet(backbone=backbone)
     elif network_config.name == 'dsvdd':
         net = build_network(network_config.type)
 
