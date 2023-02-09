@@ -68,7 +68,8 @@ class ParticulTrainer:
         # Get max correlation scores for each image from the training set
         max_scores = [[[] for _ in range(self.net.num_patterns)] for _ in range(self.net.num_classes)]
         for batch in tqdm(train_dataiter,  desc='Calib: ', position=0, leave=False):
-            images = Variable(batch['data']).cuda()
+            # Use weak augmentation
+            images = Variable(batch['data_aux']).cuda()
             labels = Variable(batch['label'])
 
             # Compute prediction and correlation scores. Shape (N x C), (N x C x H x W x P)
