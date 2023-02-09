@@ -48,7 +48,7 @@ for name, arch in osr_configs:
             --network.backbone.checkpoint 'results/checkpoints/osr/{name}_seed{seed}.ckpt' \
             --network.backbone.pretrained True \
             --network.pretrained True \
-            --network.checkpoint './results/{name}_seed{seed}_particul_net_particul_e{num_epochs}_lr{lr}/best.ckpt' \
+            --network.checkpoint './results/osr/{name}/{name}_seed{seed}_particul_net_particul_e{num_epochs}_lr{lr}/best.ckpt' \
             --network.num_patterns 4 \
             --mark {mark} \
             --merge_option merge"
