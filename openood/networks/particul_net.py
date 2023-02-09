@@ -34,17 +34,20 @@ class ParticulNet(nn.Module):
                 x: Tensor,
                 return_confidence: bool = False,
                 return_activation: bool = False,
-                ) -> Union[Tensor, Tuple[Tensor, Tensor]]:
+                return_xai_data: bool = False
+                ) -> Union[Tensor, Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor]]:
         """
         Forward pass
         Args:
             x: Tensor (N x 3 x H x W)
             return_confidence: Return confidence scores
             return_activation: Return pattern activation maps
+            return_xai_data: Return data for generating explanations
 
         Returns:
             Prediction and confidence scores if return_confidence is True
             Prediction and pattern activation maps if return_activation is True
+            Prediction, non aggregated confidence scores and pattern activation maps if return_xai_data is True
             Prediction only otherwise
         """
         logits, features = self.backbone(x, return_feature_map=True)
@@ -65,5 +68,7 @@ class ParticulNet(nn.Module):
             return logits, conf
         elif return_activation:
             return logits, amaps
+        elif return_xai_data:
+            return logits, conf, amaps
         else:
             return logits
