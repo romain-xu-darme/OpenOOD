@@ -1,3 +1,6 @@
+from openood.networks.lenet import LeNet
+from openood.networks.resnet18_32x32 import ResNet18_32x32
+
 import torch.nn as nn
 from torch import Tensor
 from typing import Tuple, Union
@@ -5,18 +8,29 @@ import torch
 
 
 class FNRDNet(nn.Module):
-    def __init__(self, backbone: nn.Module, num_classes: int):
+    def __init__(self, backbone: nn.Module):
         """
         Build a FNRDNet
         Args:
             backbone: Target classifier
-            num_classes: Number of classes
         """
         super(FNRDNet, self).__init__()
 
         self.backbone = backbone
-        self.max_mask : torch.Tensor
-        self.min_mask : torch.Tensor
+
+        if isinstance(backbone, LeNet):
+            mask_size = 1780
+        elif isinstance(backbone, ResNet18_32x32):
+            mask_size = 180736
+        else:
+            mask_size = -1
+        self.max_mask = nn.Parameter(
+            torch.empty(mask_size, dtype=torch.float, device="cuda")
+        )
+        self.min_mask = nn.Parameter(
+            torch.empty(mask_size, dtype=torch.float, device="cuda")
+        )
+
 
     def forward(
         self,
@@ -32,13 +46,20 @@ class FNRDNet(nn.Module):
             Prediction and confidence scores if return_confidence is True, prediction only otherwise
         """
         pred, feature_list = self.backbone(x, return_feature_list=True)
-        num_neurons = len(self.min_mask)
-        outliers = []
-        for act in zip(*feature_list):
+
+        outliers = torch.Tensor()
+        n_batch = feature_list[0].size(0)
+        activations = [f.view(n_batch, -1) for f in feature_list]
+        activations = torch.cat(activations, dim=1)
+        # For each element of the batch
+        for act in activations:
             max_outliers = torch.numel(act[act > self.max_mask])
             min_outliers = torch.numel(act[act < self.min_mask])
-            outliers.append((max_outliers + min_outliers) / num_neurons)
-        cfd = sum(outliers) / len(outliers)
+            outliers = torch.cat(
+                (outliers, torch.Tensor([max_outliers + min_outliers]))
+            )
+        cfd = outliers
+
         if return_confidence:
             return pred, cfd
         else:

@@ -35,9 +35,8 @@ class FNRDTrainer:
         training dataset."""
         self.net.train()
         correct_count = 0.0
-        total = 0.0
-        accuracy = 0.0
         train_dataiter = iter(self.train_loader)
+        assert epoch_idx == 1
 
         for train_step in tqdm(
             range(1, len(train_dataiter) + 1),
@@ -50,32 +49,26 @@ class FNRDTrainer:
             labels = Variable(batch["label"]).cuda()
             self.net.zero_grad()
 
-            pred_original, feature_list = self.net(images, return_feature_list=True)
-            activations = torch.Tensor(*feature_list)
-            if train_step == 0:
-                self.net.min_mask = activations.min(dim=0)[0]
-                self.net.max_mask = activations.max(dim=0)[0]
+
+            pred_original, feature_list = self.net.backbone(
+                images, return_feature_list=True
+            )
+            n_batch = feature_list[0].size(0)
+            activations = [f.view(n_batch, -1) for f in feature_list]
+            activations = torch.cat(activations, dim=1)
+            if train_step == 1:
+                buf_min: torch.Tensor = activations.min(dim=0)[0]
+                buf_max: torch.Tensor = activations.max(dim=0)[0]
             else:
-                self.net.min_mask = torch.minimum(activations, self.net.min_mask)[0]
-                self.net.max_mask = torch.maximum(activations, self.net.max_mask)[0]
-            pred_original = F.softmax(pred_original, dim=-1)
-            eps = self.config.trainer["eps"]
-            pred_original = torch.clamp(pred_original, 0.0 + eps, 1.0 - eps)
-            pred_idx = torch.max(pred_original.data, 1)[1]
-            total += labels.size(0)
-            correct_count += (pred_idx == labels.data).sum()
-            accuracy = correct_count / total
+                buf_min.minimum(activations)
+                buf_max.maximum(activations)
+            pred = pred_original.data.max(1)[1]
+            correct_count += pred.eq(labels.data).sum().item()
+        acc = correct_count / len(self.train_loader.dataset)
         metrics = {}
-        metrics["train_acc"] = accuracy
+        metrics["train_acc"] = acc
         metrics["epoch_idx"] = epoch_idx
+        metrics["loss"] = 0.0
+        self.net.min_mask = nn.Parameter(buf_min)
+        self.net.max_mask = nn.Parameter(buf_max)
         return self.net, metrics
-
-
-def encode_onehot(labels, n_classes):
-    onehot = torch.FloatTensor(labels.size()[0], n_classes)  # batchsize * num of class
-    labels = labels.data
-    if labels.is_cuda:
-        onehot = onehot.cuda()
-    onehot.zero_()
-    onehot.scatter_(1, labels.view(-1, 1), 1)
-    return onehot

@@ -11,7 +11,6 @@ import openood.utils.comm as comm
 
 from .bit import KNOWN_MODELS
 from .conf_branch_net import ConfBranchNet
-from .particul_net import ParticulNet
 from .fnrd_net import FNRDNet
 from .csi_net import CSINet
 from .de_resnet18_256x256 import AttnBasicBlock, BN_layer, De_ResNet18_256x256
@@ -209,16 +208,10 @@ def get_network(network_config):
         backbone = get_network(network_config.backbone)
         net = ConfBranchNet(backbone=backbone, num_classes=num_classes)
 
-    elif network_config.name == 'particul_net':
-        print("#############################################################")
-        print(network_config)
-        print("#############################################################")
-        backbone = get_network(network_config.backbone)
-        net = ParticulNet(backbone=backbone, num_classes=num_classes, num_patterns=network_config.num_patterns)
-
     elif network_config.name == 'fnrd_net':
         backbone = get_network(network_config.backbone)
-        net = FNRDNet(backbone=backbone, num_classes=num_classes)
+        net = FNRDNet(backbone=backbone)
+
     elif network_config.name == 'dsvdd':
         net = build_network(network_config.type)
 
@@ -257,6 +250,14 @@ def get_network(network_config):
             net.load_from(np.load(network_config.checkpoint))
         elif network_config.name == 'vit':
             pass
+        elif network_config.name == 'fnrd_net':
+            net.load_state_dict(
+                    torch.load(network_config.checkpoint),
+                    strict=True)
+            net.backbone.load_state_dict(
+                    torch.load(network_config.backbone.checkpoint),
+                    strict=True)
+
         else:
             try:
                 net.load_state_dict(torch.load(network_config.checkpoint),
