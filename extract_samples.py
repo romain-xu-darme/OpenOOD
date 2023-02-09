@@ -1,5 +1,6 @@
 from openood.datasets import get_dataloader
 from openood.utils import setup_config
+from openood.preprocessors.resize_preprocessor import ResizePreProcessor
 from openood.networks.utils import get_network
 from openood.explainers.particul_explainer import dummy_preprocessing, ParticulExplainer
 import os
@@ -8,6 +9,7 @@ from tqdm import tqdm
 config = setup_config()
 dataloader = get_dataloader(config)
 net = get_network(config.network).eval()
+resize = ResizePreProcessor(config)
 
 trainloader = dataloader['train']
 traindataset = trainloader.dataset
@@ -31,7 +33,7 @@ for batch in tqdm(train_dataiter, desc='Finding best samples: ', position=0, lea
 # Disable dataset preprocessing
 preprocessing = traindataset.transform_aux_image
 traindataset.transform_aux_image = dummy_preprocessing
-explainer = ParticulExplainer(net=net, preprocessing=preprocessing)
+explainer = ParticulExplainer(net=net, preprocessing=preprocessing, resize=resize)
 os.makedirs(config.output_dir, exist_ok=True)
 for cidx in range(num_classes):
 	for pidx in range(num_patterns):
@@ -40,6 +42,6 @@ for cidx in range(num_classes):
 			print(cidx, pidx, best_samples[cidx][pidx]['conf'])
 		# Recover image
 		sample = traindataset[best_samples[cidx][pidx]['index']]
-		imgs = explainer.explain(sample['data_aux'])
-		imgs[pidx].save(os.path.join(config.output_dir, f"class_{sample['label']:03d}_p{pidx}.png"))
+		_, _, imgs = explainer.explain(sample['data_aux'])
+		imgs[pidx].resize((150, 150)).save(os.path.join(config.output_dir, f"class_{sample['label']:03d}_p{pidx}.png"))
 

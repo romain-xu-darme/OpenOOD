@@ -5,7 +5,7 @@ from skimage.filters import threshold_otsu
 import torch.nn as nn
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
 from torch import Tensor
 
 
@@ -97,6 +97,7 @@ class ParticulExplainer(nn.Module):
 	def __init__(self,
 				 net: ParticulNet,
 				 preprocessing: Callable,
+				 resize: Callable,
 				 noise_ratio: float = 0.2,
 				 nsamples: int = 10,
 				 polarity: Optional[str] = 'absolute',
@@ -107,6 +108,7 @@ class ParticulExplainer(nn.Module):
 
 		:param net: ParticulNet
 		:param preprocessing: Preprocessing function
+		:param resize: Resizing function included in preprocessing
 		:param noise_ratio: Noise level
 		:param nsamples: Number of noisy samples
 		:param polarity: Polarity filter applied on gradients
@@ -116,6 +118,7 @@ class ParticulExplainer(nn.Module):
 		super().__init__()
 		self.net = net.eval()
 		self.preprocessing = preprocessing
+		self.resize = resize
 		self.ratio = noise_ratio
 		self.nsamples = nsamples
 		self.polarity = polarity
@@ -124,14 +127,12 @@ class ParticulExplainer(nn.Module):
 
 	def explain(self,
 				img: Image.Image,
-				show_confidence: bool = False,
 				part_index: List = None,
 				device='cuda:0'
-				) -> List[Image.Image]:
+				) -> Tuple[int, List[float], List[Image.Image]]:
 		""" Explain confidence
 
 		:param img: Input image
-		:param show_confidence: Display confidence level
 		:param part_index: Indices of detectors (default: all)
 		:param device: Target device (default: cuda:0)
 		:returns: List of images
@@ -149,6 +150,7 @@ class ParticulExplainer(nn.Module):
 		pred = torch.argmax(logits[0]).item()
 
 		# Move to CPU and select activation maps from most probable class only
+		confs = migrate(confs)[0, pred]
 		amaps = migrate(amaps)[0, pred]
 		P, H, W = amaps.shape
 
@@ -232,19 +234,8 @@ class ParticulExplainer(nn.Module):
 			res = [normalize_min_max(heatmap) for heatmap in res]
 
 		# Apply gradient mask to image
+		if self.resize:
+			img = self.resize(img)
 		processed = [apply_mask(img, pattern, default_colors[0]) for pidx, pattern in enumerate(res)]
 
-		# Add confidence score
-		if show_confidence:
-			imgs_w_conf = []
-			myFont = ImageFont.truetype('OpenSans-Semibold.ttf', 30)
-			for img, conf in zip(processed, confs[0, pred]):
-				width, height = img.size
-				res = Image.new(img.mode, (width, height+30), (255, 255, 255))
-				res.paste(img, (0, 0))
-				draw = ImageDraw.Draw(res)
-				draw.text((width/2 - 5, height), f"{int(conf*100)}%", font=myFont, fill=(0, 0, 0))
-				imgs_w_conf.append(res)
-			processed = imgs_w_conf
-
-		return processed
+		return pred, list(confs), processed
