@@ -11,7 +11,10 @@ import openood.utils.comm as comm
 
 from .bit import KNOWN_MODELS
 from .conf_branch_net import ConfBranchNet
+<<<<<<< HEAD
 from .fnrd_net import FNRDNet
+=======
+>>>>>>> parent of 88395e1 (Preliminary setup for Particul support)
 from .csi_net import CSINet
 from .de_resnet18_256x256 import AttnBasicBlock, BN_layer, De_ResNet18_256x256
 from .densenet import DenseNet3
