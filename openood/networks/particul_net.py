@@ -60,8 +60,8 @@ class ParticulNet(nn.Module):
             conf = conf.mean(dim=2)
             # Element-wise multiplication with normalised logits
             conf = conf.mul(torch.softmax(logits, dim=1))
-            # Average across classes
-            conf = conf.mean(dim=1)
+            # Sum across classes
+            conf = conf.sum(dim=1)
             return logits, conf
         elif return_activation:
             return logits, amaps

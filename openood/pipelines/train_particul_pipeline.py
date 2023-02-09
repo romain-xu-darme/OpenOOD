@@ -49,6 +49,8 @@ class TrainParticulPipeline:
             # start calibration
             print('Start calibrating...', flush=True)
             net = recorder.load_model_state(net, 'best.ckpt')
+            # Use test preprocessing for calibration (resize without random transforms)
+            trainer.train_loader.dataset.transform_image = test_loader.dataset.transform_image
             net = trainer.calibrate()
             recorder.save_model_state(net, 'best.ckpt')
 
