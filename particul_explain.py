@@ -48,7 +48,7 @@ def explain_dataset(
 		inference.add_node(pydot.Node(
 						name='Source',
 						shape="box",
-						label=f"Predicted class: {pred}\nAvg conf.: {sum(conf)/num_patterns:.2f}",
+						label=f"<<B>Predicted class: {pred}<br/>Avg conf.: {sum(conf)/num_patterns:.2f}</B>>",
 						height=2.6, width=2.1, imagepos="tc", labelloc="b",
 					    image=os.path.join(dir_path, 'source.png')
 		))
@@ -58,8 +58,7 @@ def explain_dataset(
 				inference.add_node(pydot.Node(
 					name=f"Pattern{pidx}",
 					shape="box",
-					#label=f"<<B>NOT FOUND</B> <br/>(conf.:{conf[pidx]:.2f})>",
-					label=f"NOT FOUND\n(conf.:{conf[pidx]:.2f}",
+					label=f"<<B>NOT FOUND <br/>(conf.:{conf[pidx]:.2f})</B>>",
 					fontcolor="red",
 					height=2.6, width=2.1, imagepos="tc", labelloc="b",
 					image=os.path.join(dir_path, 'source.png')
@@ -68,15 +67,14 @@ def explain_dataset(
 				inference.add_node(pydot.Node(
 					name=f"Pattern{pidx}",
 					shape="box",
-					#label=f"<<B>FOUND</B><br/>(conf.:{conf[pidx]:.2f})>",
-					label=f"FOUND\n(conf.:{conf[pidx]:.2f}",
+					label=f"<<B>FOUND<br/>(conf.:{conf[pidx]:.2f})</B>>",
 					fontcolor="black",
 					height=2.6, width=2.1, imagepos="tc", labelloc="b",
 					image=os.path.join(dir_path, f'p{pidx}.png')
 				))
 
 		references = pydot.Cluster(name="cluster_reference",
-								   label=f"Training examples for class {pred}",
+								   label=f"<<B>Training examples for class {pred}</B>>",
 								   labelloc="t"
 		)
 		for pidx in range(num_patterns):
