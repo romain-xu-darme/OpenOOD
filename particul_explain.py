@@ -4,6 +4,7 @@ from openood.networks.utils import get_network
 from openood.preprocessors.resize_preprocessor import ResizePreProcessor
 from openood.explainers.particul_explainer import dummy_preprocessing, ParticulExplainer
 from typing import Callable
+import pydot
 import os
 from tqdm import tqdm
 from torch.utils.data.dataset import Dataset
@@ -42,45 +43,64 @@ def explain_dataset(
 		sample['data_aux'].resize((150, 150)).save(os.path.join(dir_path, f"source.png"))
 
 		# Create explanation
-		graph = "digraph {graph [compound=true, labelloc=\"b\"]; " \
-					"node [shape=box]; " \
-					"edge [dir=none];"
-		graph += "Source[ " \
-				 f"label=\"Predicted class: {pred}\nAvg conf.: {sum(conf)/num_patterns:.2f}\"" \
-				 "height=\"2.6\"" \
-				 "width=\"2.1\"" \
-				 "imagepos=\"tc\"" \
-				 "labelloc=\"b\"" \
-				 f"image=\"{os.path.join(dir_path, 'source.png')}\"];"
+		graph = pydot.Dot('explanation', graph_type='digraph', compound=True)
+		inference = pydot.Subgraph(rank="same")
+		inference.add_node(pydot.Node(
+						name='Source',
+						shape="box",
+						label=f"Predicted class: {pred}\nAvg conf.: {sum(conf)/num_patterns:.2f}",
+						height=2.6, width=2.1, imagepos="tc", labelloc="b",
+					    image=os.path.join(dir_path, 'source.png')
+		))
 
-		# Subgraphs
-		graph += "subgraph cluster_detectors {label=\"Individual detection confidence\"; labelloc=\"t\";  "
 		for pidx in range(num_patterns):
-			graph += f"Pattern{pidx}[" \
-					f"label=\"Detector conf.:\n{conf[pidx]:.2f}\"" \
-					"height=\"2.6\"" \
-					"width=\"2.1\"" \
-					"imagepos=\"tc\"" \
-					"labelloc=\"b\"" \
-					f"image=\"{os.path.join(dir_path, f'p{pidx}.png')}\"];"
-		graph += "}"
-		graph += "subgraph cluster_references {label=\"Training examples\"; labelloc=\"b\"; "
+			if conf[pidx] < 0.3:
+				inference.add_node(pydot.Node(
+					name=f"Pattern{pidx}",
+					shape="box",
+					#label=f"<<B>NOT FOUND</B> <br/>(conf.:{conf[pidx]:.2f})>",
+					label=f"NOT FOUND\n(conf.:{conf[pidx]:.2f}",
+					fontcolor="red",
+					height=2.6, width=2.1, imagepos="tc", labelloc="b",
+					image=os.path.join(dir_path, 'source.png')
+				))
+			else:
+				inference.add_node(pydot.Node(
+					name=f"Pattern{pidx}",
+					shape="box",
+					#label=f"<<B>FOUND</B><br/>(conf.:{conf[pidx]:.2f})>",
+					label=f"FOUND\n(conf.:{conf[pidx]:.2f}",
+					fontcolor="black",
+					height=2.6, width=2.1, imagepos="tc", labelloc="b",
+					image=os.path.join(dir_path, f'p{pidx}.png')
+				))
+
+		references = pydot.Cluster(name="cluster_reference",
+								   label=f"Training examples for class {pred}",
+								   labelloc="t"
+		)
 		for pidx in range(num_patterns):
 			# Fetch most correlated sample from training set
-			graph += f"Pattern{pidx}Ref[" \
-					"label=\"\"" \
-					"height=\"2.1\"" \
-					"width=\"2.1\"" \
-					"imagepos=\"tc\"" \
-					"labelloc=\"b\"" \
-					f"image=\"{os.path.join(output_dir, f'class_{pred:03d}_p{pidx}.png')}\"];"
-		graph += "}"
+			references.add_node(pydot.Node(
+				name=f"Pattern{pidx}Ref",
+				label="",
+				shape="box",
+				height=2.1, width=2.1, imagepos="tc",
+				image=os.path.join(output_dir, f'class_{pred:03d}_p{pidx}.png')
+			))
+		graph.add_subgraph(inference)
+		graph.add_subgraph(references)
 		# Connect
 		for pidx in range(num_patterns):
-			graph += f"{{Pattern{pidx} -> Pattern{pidx}Ref;}}"
-		graph += f"Source -> Pattern{num_patterns-1} [constraint=False, weight=10];}}"
-		with open(os.path.join(dir_path, 'explanation.dot'), 'w') as f:
-			f.write(graph)
+			graph.add_edge(pydot.Edge(
+				src=f"Pattern{pidx}Ref", dst=f"Pattern{pidx}",
+				dir="none",
+			))
+		graph.add_edge(pydot.Edge(
+			src="Source", dst="Pattern0",
+			dir="none",
+		))
+		graph.write(os.path.join(dir_path, 'explanation.dot'))
 		check_call(f"dot -Tpdf -Gmargin=0 {os.path.join(dir_path, 'explanation.dot')} "
 				   f"-o {os.path.join(dir_path, 'explanation.pdf')}", shell=True)
 
