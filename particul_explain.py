@@ -25,7 +25,8 @@ def explain_dataset(
 	dataset.transform_aux_image = dummy_preprocessing
 	explainer = ParticulExplainer(net=net, preprocessing=preprocessing, resize=resize)
 	os.makedirs(os.path.join(output_dir, status, name), exist_ok=True)
-
+	max_conf, max_conf_index = 0, -1
+	min_conf, min_conf_index = 1, -1
 	for sample in tqdm(dataset, desc=f'Processing {name}'):
 		if percentage is not None:
 			if random.random() > percentage:
@@ -33,6 +34,16 @@ def explain_dataset(
 
 		# Compute part visualisations
 		pred, conf, imgs = explainer.explain(sample['data_aux'])
+
+		# Keep track of the best and worst
+		avg_conf = sum(conf)/len(conf)
+		if avg_conf > max_conf:
+			max_conf = avg_conf
+			max_conf_index = sample['index']
+		if avg_conf < min_conf:
+			min_conf = avg_conf
+			min_conf_index = sample['index']
+
 		num_patterns = len(imgs)
 		# Resize and save images
 		dir_path = os.path.join(output_dir, status, name, str(sample['index']))
@@ -74,7 +85,7 @@ def explain_dataset(
 				))
 
 		references = pydot.Cluster(name="cluster_reference",
-								   label=f"<<B>Training examples for class {pred}</B>>",
+								   label=f"<<B>Most activate samples for class {pred}</B>>",
 								   labelloc="t"
 		)
 		for pidx in range(num_patterns):
@@ -101,6 +112,10 @@ def explain_dataset(
 		graph.write(os.path.join(dir_path, 'explanation.dot'))
 		check_call(f"dot -Tpdf -Gmargin=0 {os.path.join(dir_path, 'explanation.dot')} "
 				   f"-o {os.path.join(dir_path, 'explanation.pdf')}", shell=True)
+
+
+	print(f'Min conf: {min_conf} @{min_conf_index}')
+	print(f'Max conf: {max_conf} @{max_conf_index}')
 
 
 config = setup_config()
