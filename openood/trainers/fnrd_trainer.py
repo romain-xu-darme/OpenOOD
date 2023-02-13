@@ -33,7 +33,7 @@ class FNRDTrainer:
         for a system. The MFR of a neuron is the min and max
         post-activation values for the whole
         training dataset."""
-        self.net.train()
+        self.net.eval()
         correct_count = 0.0
         train_dataiter = iter(self.train_loader)
         assert epoch_idx == 1
