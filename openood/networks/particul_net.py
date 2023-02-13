@@ -7,7 +7,11 @@ import openood.networks.lenet
 
 
 class ParticulNet(nn.Module):
-    def __init__(self, backbone: nn.Module, num_classes: int, num_patterns: int):
+    def __init__(self,
+                 backbone: nn.Module,
+                 num_classes: int,
+                 num_patterns: int,
+                 mode: str = 'categorical_distribution'):
         """
         Build a ParticulNet
         Args:
@@ -24,7 +28,7 @@ class ParticulNet(nn.Module):
         self.num_classes = num_classes
         self.particuls = nn.ModuleList([ClassWiseParticul(feature_size, num_patterns)
                                        for _ in range(num_classes)])
-
+        self.mode = mode
         # Freeze classifier
         self.backbone.eval()
         for param in self.backbone.parameters():
@@ -59,12 +63,21 @@ class ParticulNet(nn.Module):
         N, C, P, H, W = amaps.shape
 
         if return_confidence:
-            # Average across detectors
-            conf = conf.mean(dim=2)
-            # Element-wise multiplication with normalised logits
-            conf = conf.mul(torch.softmax(logits, dim=1))
-            # Sum across classes
-            conf = conf.sum(dim=1)
+            if self.mode == 'categorical_distribution':
+                # Average across detectors
+                conf = conf.mean(dim=2)
+                # Element-wise multiplication with normalised logits
+                conf = conf.mul(torch.softmax(logits, dim=1))
+                # Sum across classes
+                conf = conf.sum(dim=1)
+            else:  # Most probable class only
+                # For each element of the batch, find index of most probable class
+                class_idx = logits.argmax(dim=1, keepdim=True)  # Shape N x 1
+                class_idx = class_idx[:, :, None].expand([N, 1, P])
+                # Confidence scores of most probable classes
+                conf = conf.gather(dim=1, index=class_idx).squeeze(dim=1)  # Shape N x P
+                # Average confidence of all class detectors
+                conf = conf.mean(dim=1, keepdim=True)
             return logits, conf
         elif return_activation:
             return logits, amaps
