@@ -18,6 +18,14 @@ dataset_configs = {
 						'--network.backbone.pretrained True '
 						'--network.num_patterns 4'
 			},
+			'fnrd': {
+				'arch': 'configs/networks/fnrd.yml',
+				'ckpt': '--network.checkpoint "results/cifar10_fnrd_net_fnrd_e1_lr0.1/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet18_32x32 '
+                        '--network.backbone.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" '
+						'--network.backbone.pretrained True '
+			},
 			'vim': {
 				'arch': 'configs/networks/resnet18_32x32.yml',
 				'ckpt': '--network.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" '
@@ -49,6 +57,14 @@ dataset_configs = {
 						'--network.backbone.pretrained True '
 						'--network.num_patterns 4'
 			},
+			'fnrd': {
+				'arch': 'configs/networks/fnrd.yml',
+				'ckpt': '--network.checkpoint "results/cifar100_fnrd_net_fnrd_e1_lr0.1/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet18_32x32 '
+                        '--network.backbone.checkpoint "results/checkpoints/cifar100_res18_acc78.20.ckpt" '
+						'--network.backbone.pretrained True '
+			},
 			'vim': {
 				'arch': 'configs/networks/resnet18_32x32.yml',
 				'ckpt': '--network.checkpoint "results/checkpoints/cifar100_res18_acc78.20.ckpt" '
@@ -79,6 +95,14 @@ dataset_configs = {
 						'--network.backbone.checkpoint results/checkpoints/mnist_lenet_acc99.60.ckpt '
 						'--network.backbone.pretrained True '
 						'--network.num_patterns 4'
+			},
+			'fnrd': {
+				'arch': 'configs/networks/fnrd.yml',
+				'ckpt': '--network.checkpoint "results/mnist_fnrd_net_fnrd_e1_lr0.1/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet18_32x32 '
+                        '--network.backbone.checkpoint "results/checkpoints/mnist_lenet_acc99.60.ckpt" '
+						'--network.backbone.pretrained True '
 			},
 			'vim': {
 				'arch': 'configs/networks/lenet.yml',
