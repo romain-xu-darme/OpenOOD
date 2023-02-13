@@ -19,5 +19,5 @@ configs/pipelines/test/test_ood.yml \
 configs/preprocessors/base_preprocessor.yml \
 configs/postprocessors/odin.yml \
 --num_workers 8 \
---network.checkpoint 'results/checkpoints/mnist_lenet_acc99.30.ckpt' \
+--network.checkpoint 'results/checkpoints/mnist_lenet_acc99.60.ckpt' \
 --mark 0

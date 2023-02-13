@@ -2,7 +2,7 @@ from openood.utils import Config
 
 from .base_postprocessor import BasePostprocessor
 from .conf_branch_postprocessor import ConfBranchPostprocessor
-from .particul_postprocessor import ParticulPostprocessor
+from .fnrd_postprocessor import FNRDPostprocessor
 from .cutpaste_postprocessor import CutPastePostprocessor
 from .dice_postprocessor import DICEPostprocessor
 from .draem_postprocessor import DRAEMPostprocessor
@@ -35,7 +35,7 @@ from .vim_postprocessor import VIMPostprocessor
 def get_postprocessor(config: Config):
     postprocessors = {
         'conf_branch': ConfBranchPostprocessor,
-        'particul': ParticulPostprocessor,
+        'fnrd': FNRDPostprocessor,
         'msp': BasePostprocessor,
         'ebo': EBOPostprocessor,
         'odin': ODINPostprocessor,

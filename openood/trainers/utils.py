@@ -6,7 +6,7 @@ from .arpl_gan_trainer import ARPLGANTrainer
 from .arpl_trainer import ARPLTrainer
 from .base_trainer import BaseTrainer
 from .conf_branch_trainer import ConfBranchTrainer
-from .particul_trainer import ParticulTrainer
+from .fnrd_trainer import FNRDTrainer
 from .csi_trainer import CSITrainer
 from .cutmix_trainer import CutMixTrainer
 from .cutpaste_trainer import CutPasteTrainer
@@ -36,7 +36,7 @@ def get_trainer(net, train_loader: DataLoader, config: Config):
             'draem': DRAEMTrainer,
             'kdad': KdadTrainer,
             'conf_branch': ConfBranchTrainer,
-            'particul': ParticulTrainer,
+            'fnrd': FNRDTrainer,
             'dcae': AETrainer,
             'dsvdd': DSVDDTrainer,
             'opengan': OpenGanTrainer,
