@@ -100,7 +100,7 @@ dataset_configs = {
 				'arch': 'configs/networks/fnrd.yml',
 				'ckpt': '--network.checkpoint "results/mnist_fnrd_net_fnrd_e1_lr0.1/best.ckpt" '
 						'--network.pretrained True '
-						'--network.backbone.name resnet18_32x32 '
+						'--network.backbone.name lenet '
                         '--network.backbone.checkpoint "results/checkpoints/mnist_lenet_acc99.60.ckpt" '
 						'--network.backbone.pretrained True '
 			},
