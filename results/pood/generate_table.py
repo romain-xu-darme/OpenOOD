@@ -23,7 +23,7 @@ def get_args() -> argparse.Namespace:
 methods = ['msp', 'odin', 'mds', 'gram', 'ebo', 'gradnorm',
 		   'react', 'mls', 'klm', 'vim', 'knn', 'dice', 'particul']
 methods_nice = ['MSP', 'ODIN', 'MDS', 'Gram', 'EBO', 'GradNorm',
-				'ReAct', 'MaxLogit', 'KLM', 'ViM', 'KNN', 'DICE', 'Particul']
+				'ReAct', 'MaxLogit', 'KLM', 'ViM', 'KNN', 'DICE', 'IODE']
 scenari = ['noise', 'blur', 'rotate_forth', 'rotate_back', 'brightness']
 datasets = ['MNIST', 'CIFAR10', 'CIFAR100']
 
@@ -118,6 +118,10 @@ def generate_graphs(dir: str):
 									color = 'tab:red'
 								else:
 									color = 'tab:blue'
+					axs[midx][sc_idx].text(0.3, 0.5, f'Sr: {sr}', fontsize=10,
+										   bbox=dict(facecolor='white', alpha=0.5),
+										   horizontalalignment='center', verticalalignment='center',
+										   transform=axs[midx][sc_idx].transAxes)
 					axs[midx][sc_idx].plot(magnitudes, avg_confidences, label=mname, color=color)
 					axs[midx][sc_idx].set_yticklabels([])
 					axs[midx][sc_idx].tick_params(left=False)
@@ -149,9 +153,20 @@ def generate_graphs(dir: str):
 									else:
 										color = 'tab:blue'
 						if direction == 'rotate_back':
+							axs[midx][sc_idx].text(0.7, 0.5, f'Sr: {sr}', fontsize=10,
+												   bbox=dict(facecolor='white', alpha=0.5),
+												   horizontalalignment='center', verticalalignment='center',
+												   transform=axs[midx][sc_idx].transAxes)
 							axs[midx][sc_idx].plot(magnitudes, avg_confidences, label=mname, color=color)
 							axs[midx][sc_idx].legend(loc=1)
 						else:
+							axs[midx][sc_idx].text(0.3, 0.5, f'Sr: {sr}', fontsize=10,
+												   bbox=dict(facecolor='white', alpha=0.5),
+												   horizontalalignment='center', verticalalignment='center',
+												   transform=axs[midx][sc_idx].transAxes)
+							# Add dash line to separate plots
+							axs[midx][sc_idx].plot([180, 180], [min(avg_confidences), max(avg_confidences)],
+												   color='black', linestyle='dashed')
 							axs[midx][sc_idx].plot(magnitudes, avg_confidences, color=color)
 						axs[midx][sc_idx].set_yticklabels([])
 						axs[midx][sc_idx].tick_params(left=False)
@@ -159,7 +174,7 @@ def generate_graphs(dir: str):
 				axs[-1][sc_idx].set_xlabel(scenari_magnitude_labels[scenario.lower()])
 				axs[0][sc_idx].set_title(f'{scenario} on {dataset}')
 		fig = plt.gcf()
-		fig.set_size_inches(12, 10)
+		fig.set_size_inches(12, 12)
 		os.makedirs(dir, exist_ok=True)
 		fig.tight_layout()
 		fig.savefig(os.path.join(dir, f'{dataset}_pood.png'), dpi=100)
