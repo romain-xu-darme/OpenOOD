@@ -14,7 +14,7 @@ def dummy_preprocessing(data: Any):
 
 
 def migrate(tensor: Tensor) -> np.array:
-	return tensor.detach().cpu().numpy()
+	return tensor.detach().cpu().numpy().copy()
 
 
 def polarity_and_collapse(
@@ -192,7 +192,7 @@ def apply_bounding_box (
 			break
 		ymax -= 1
 	draw = ImageDraw.Draw(img)
-	draw.rectangle([(xmin, ymin), (xmax, ymax)], outline="red")
+	draw.rectangle([(xmin, ymin), (xmax, ymax)], outline="red", width=3)
 	return img
 
 
@@ -210,7 +210,7 @@ class ParticulExplainer(nn.Module):
 				 nsamples: int = 10,
 				 polarity: Optional[str] = 'absolute',
 				 gaussian_ksize: Optional[int] = 5,
-				 normalize: Optional[bool] = True,
+				 normalize: Optional[bool] = False,
 				 ):
 		"""	 Create ParticulExplainer
 
@@ -337,10 +337,12 @@ class ParticulExplainer(nn.Module):
 		# Gaussian filter
 		if self.gaussian_ksize:
 			res = [gaussian_filter(heatmap, sigma=self.gaussian_ksize) for heatmap in res]
+		if self.normalize:
+			res = [normalize_min_max(heatmap) for heatmap in res]
 
 		# Apply gradient mask to image
 		if self.resize:
 			img = self.resize(img)
-		processed = [apply_bounding_box(img.copy(), pattern) for pattern in res]
+		processed = [apply_mask(img.copy(), pattern) for pattern in res]
 
 		return pred, list(confs), processed
