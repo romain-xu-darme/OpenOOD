@@ -58,7 +58,7 @@ class FNRDNet(nn.Module):
             outliers = torch.cat(
                 (outliers, torch.Tensor([max_outliers + min_outliers]))
             )
-        cfd = 1-(outliers/len(self.max_mask))
+        cfd = 1-(outliers/len(self.min_mask))
 
         if return_confidence:
             return pred, cfd
