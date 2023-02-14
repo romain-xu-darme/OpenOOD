@@ -9,10 +9,12 @@ osr_configs = [
 ]
 lr = "0.0005"
 num_epochs = 200
-mark = 'p4k3'
+num_patterns = 4
+mark = f'p{num_patterns}'
 
 # Merge results
 output = 'results/osr_ood.csv'
+output_dir = 'results/osr/p4'
 
 for name, arch in osr_configs:
     for seed in range(1, 6):
@@ -27,8 +29,9 @@ for name, arch in osr_configs:
             --optimizer.lr {lr} \
             --optimizer.weight_decay 1.0e-5 \
             --network.backbone.name {arch} \
+            --network.backbone.pretrained True \
             --network.backbone.checkpoint 'results/checkpoints/osr/{name}_seed{seed}.ckpt' \
-            --network.num_patterns 4 \
+            --network.num_patterns {num_patterns} \
             --network.pretrained False \
             --trainer.loc_ksize 3 \
             --trainer.unq_ratio 1.0 \
@@ -49,13 +52,14 @@ for name, arch in osr_configs:
             --network.backbone.pretrained True \
             --network.pretrained True \
             --network.checkpoint './results/{name}_seed{seed}_particul_net_particul_e{num_epochs}_lr{lr}/best.ckpt' \
-            --network.num_patterns 4 \
+            --network.num_patterns {num_patterns} \
+            --output_dir {output_dir} \
             --mark {mark} \
             --merge_option merge"
         os.system(command)
 
         with open(output, 'a') as fout:
-            fname = f'./results/{name}_seed{seed}_particul_net_test_ood_osr_particul_{mark}/ood.csv'
+            fname = os.path.join(output_dir, f'{name}_seed{seed}_particul_net_test_ood_osr_particul_{mark}/ood.csv')
             with open(fname, 'r') as fin:
                 lines = fin.readlines()
                 fout.write(f"{fname},{seed},{lines[1]}")

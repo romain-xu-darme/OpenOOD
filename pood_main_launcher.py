@@ -118,6 +118,37 @@ dataset_configs = {
 			}
 		},
 	},
+	'imagenet': {
+		'yaml': "--config configs/datasets/imagenet/imagenet.yml configs/datasets/imagenet/imagenet_ood.yml",
+		'networks': {
+			'standard': {
+				'arch': 'configs/networks/resnet50.yml',
+				'ckpt': '--network.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" '
+						'--network.pretrained True ',
+			},
+			'particul': {
+				'arch': 'configs/networks/particul.yml',
+				'ckpt': '--network.checkpoint "results/imagenet_particul/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet50 '
+						'--network.backbone.checkpoint results/checkpoints/imagenet_res50_acc76.10.pth '
+						'--network.backbone.pretrained True '
+						'--network.num_patterns 4'
+			},
+			'vim': {
+				'arch': 'configs/networks/resnet50.yml',
+				'ckpt': '--network.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" '
+						'--network.pretrained True --postprocessor.postprocessor_args.dim 1000 ',
+			},
+			'react': {
+				'arch': 'configs/networks/react_net.yml',
+				'ckpt': '--network.pretrained False '
+						'--network.backbone.name resnet50 '
+						'--network.backbone.pretrained True '
+						'--network.backbone.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" ',
+			}
+		},
+	},
 }
 
 pipeline = 'configs/pipelines/test/test_pood.yml configs/preprocessors/base_preprocessor.yml '

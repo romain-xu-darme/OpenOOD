@@ -1,0 +1,14 @@
+exp_name: "iode_references/'@{dataset.name}'_'@{mark}'"
+output_dir: ./results/
+merge_option: default # disabled if 'save_output' is False
+mark: default # to mark the version of experiment
+
+num_gpus: 1
+num_workers: 0
+num_machines: 1
+machine_rank: 0
+
+network:
+  pretrained: True
+  backbone:
+    pretrained: True
