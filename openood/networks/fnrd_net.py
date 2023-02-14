@@ -1,5 +1,8 @@
 from openood.networks.lenet import LeNet
 from openood.networks.resnet18_32x32 import ResNet18_32x32
+from openood.networks.resnet18_64x64 import ResNet18_64x64
+from openood.networks.resnet50 import ResNet50
+
 
 import torch.nn as nn
 from torch import Tensor
@@ -22,6 +25,10 @@ class FNRDNet(nn.Module):
             mask_size = 1780
         elif isinstance(backbone, ResNet18_32x32):
             mask_size = 180736
+        elif isinstance(backbone, ResNet18_64x64):
+            mask_size = 721408
+        elif isinstance(backbone, ResNet50):
+            mask_size = 1607680
         else:
             mask_size = -1
         self.max_mask = nn.Parameter(
