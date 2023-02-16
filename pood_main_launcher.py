@@ -146,7 +146,16 @@ dataset_configs = {
 						'--network.backbone.name resnet50 '
 						'--network.backbone.pretrained True '
 						'--network.backbone.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" ',
-			}
+			},
+        	'fnrd': {
+				'arch': 'configs/networks/fnrd.yml',
+				'ckpt': '--network.checkpoint "results/imagenet_fnrd_net_fnrd_e1_lr0.1/best.ckpt" '
+						'--network.pretrained True '
+						'--network.backbone.name resnet50 '
+                        '--network.backbone.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" '
+						'--network.backbone.pretrained True '
+			},
+
 		},
 	},
 }
@@ -166,6 +175,7 @@ method_config = {
 	'dice': {'network': 'standard', 'postprocessor': 'configs/postprocessors/dice.yml'},
 	'react': {'network': 'react', 'postprocessor': 'configs/postprocessors/react.yml'},
 	'vim': {'network': 'vim', 'postprocessor': 'configs/postprocessors/vim.yml'},
+	'fnrd': {'network': 'fnrd', 'postprocessor': 'configs/postprocessors/fnrd.yml'},
 	'particul': {'network': 'particul', 'postprocessor': 'configs/postprocessors/particul.yml'}
 }
 
