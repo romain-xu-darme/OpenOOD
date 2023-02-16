@@ -20,7 +20,7 @@ class FNRDNet(nn.Module):
         super(FNRDNet, self).__init__()
 
         self.backbone = backbone
-
+        self.last_features_only = False
         if isinstance(backbone, LeNet):
             mask_size = 1780
         elif isinstance(backbone, ResNet18_32x32):
@@ -28,7 +28,8 @@ class FNRDNet(nn.Module):
         elif isinstance(backbone, ResNet18_64x64):
             mask_size = 721408
         elif isinstance(backbone, ResNet50):
-            mask_size = 1607680
+            mask_size = 2048
+            self.last_features_only = True
         else:
             mask_size = -1
         self.max_mask = nn.Parameter(
@@ -54,10 +55,12 @@ class FNRDNet(nn.Module):
         """
         pred, feature_list = self.backbone(x, return_feature_list=True)
 
-        outliers = torch.Tensor()
         n_batch = feature_list[0].size(0)
-        activations = [f.view(n_batch, -1) for f in feature_list]
-        activations = torch.cat(activations, dim=1)
+        if self.last_features_only:
+            activations = feature_list[-1].view(n_batch, -1)
+        else:
+            activations = [f.view(n_batch, -1) for f in feature_list]
+            activations = torch.cat(activations, dim=1)
 
         # Select min and max ranges corresponding to the predicted class
         class_idx = torch.argmax(pred, dim=1, keepdim=True).expand((n_batch, self.max_mask.size(1)))
