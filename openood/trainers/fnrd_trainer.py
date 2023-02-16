@@ -54,12 +54,9 @@ class FNRDTrainer:
                 n_batch = feature_list[0].size(0)
                 activations = [f.view(n_batch, -1) for f in feature_list]
                 activations = torch.cat(activations, dim=1)
-                if train_step == 1:
-                    buf_min: torch.Tensor = activations.amin(dim=0)
-                    buf_max: torch.Tensor = activations.amax(dim=0)
-                else:
-                    buf_min = buf_min.minimum(activations.amin(dim=0))
-                    buf_max = buf_max.maximum(activations.amax(dim=0))
+                for activation, label in zip(activations, labels):
+                    self.net.min_mask[label.item()] = self.net.min_mask[label.item()].minimum(activation)
+                    self.net.max_mask[label.item()] = self.net.max_mask[label.item()].maximum(activation)
                 pred = pred_original.data.max(1)[1]
                 correct_count += pred.eq(labels.data).sum().item()
         acc = correct_count / len(self.train_loader.dataset)
@@ -67,6 +64,4 @@ class FNRDTrainer:
         metrics["train_acc"] = acc
         metrics["epoch_idx"] = epoch_idx
         metrics["loss"] = 0.0
-        self.net.min_mask = nn.Parameter(buf_min)
-        self.net.max_mask = nn.Parameter(buf_max)
         return self.net, metrics
