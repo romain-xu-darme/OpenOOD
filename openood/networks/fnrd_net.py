@@ -11,7 +11,7 @@ import torch
 
 
 class FNRDNet(nn.Module):
-    def __init__(self, backbone: nn.Module):
+    def __init__(self, backbone: nn.Module, num_classes: int):
         """
         Build a FNRDNet
         Args:
@@ -32,10 +32,10 @@ class FNRDNet(nn.Module):
         else:
             mask_size = -1
         self.max_mask = nn.Parameter(
-            torch.empty(mask_size, dtype=torch.float, device="cuda")
+            torch.zeros((num_classes, mask_size), dtype=torch.float, device="cuda")
         )
         self.min_mask = nn.Parameter(
-            torch.empty(mask_size, dtype=torch.float, device="cuda")
+            100000*torch.ones((num_classes, mask_size), dtype=torch.float, device="cuda")
         )
 
 
@@ -58,14 +58,13 @@ class FNRDNet(nn.Module):
         n_batch = feature_list[0].size(0)
         activations = [f.view(n_batch, -1) for f in feature_list]
         activations = torch.cat(activations, dim=1)
-        # For each element of the batch
-        for act in activations:
-            max_outliers = torch.numel(act[act > self.max_mask])
-            min_outliers = torch.numel(act[act < self.min_mask])
-            outliers = torch.cat(
-                (outliers, torch.Tensor([max_outliers + min_outliers]))
-            )
-        cfd = 1-(outliers/len(self.min_mask))
+
+        # Select min and max ranges corresponding to the predicted class
+        class_idx = torch.argmax(pred, dim=1, keepdim=True).expand((n_batch, self.max_mask.size(1)))
+        max_mask = torch.gather(self.max_mask, dim=0, index=class_idx)
+        min_mask = torch.gather(self.min_mask, dim=0, index=class_idx)
+        outliers = torch.sum(activations > max_mask, dim=1)+torch.sum(activations < min_mask, dim=1)
+        cfd = 1-(outliers/self.min_mask.size(1))
 
         if return_confidence:
             return pred, cfd
