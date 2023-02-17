@@ -52,8 +52,11 @@ class FNRDTrainer:
                     images, return_feature_list=True
                 )
                 n_batch = feature_list[0].size(0)
-                activations = [f.view(n_batch, -1) for f in feature_list]
-                activations = torch.cat(activations, dim=1)
+                if self.net.last_features_only:
+                    activations = feature_list[-1].view(n_batch,-1)
+                else:
+                    activations = [f.view(n_batch, -1) for f in feature_list]
+                    activations = torch.cat(activations, dim=1)
                 for activation, label in zip(activations, labels):
                     self.net.min_mask[label.item()] = self.net.min_mask[label.item()].minimum(activation)
                     self.net.max_mask[label.item()] = self.net.max_mask[label.item()].maximum(activation)
