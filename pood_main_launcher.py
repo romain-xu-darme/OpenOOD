@@ -9,9 +9,9 @@ dataset_configs = {
 				'ckpt': '--network.checkpoint "results/checkpoints/cifar10_res18_acc94.30.ckpt" '
 						'--network.pretrained True ',
 			},
-			'particul': {
+			'iode': {
 				'arch': 'configs/networks/particul.yml',
-				'ckpt': '--network.checkpoint "results/cifar10_particul_net_particul_e200_lr0.0005_p4k3/best.ckpt" '
+				'ckpt': '--network.checkpoint "results/cifar10_particul/best.ckpt" '
 						'--network.pretrained True '
 						'--network.backbone.name resnet18_32x32 '
 						'--network.backbone.checkpoint results/checkpoints/cifar10_res18_acc94.30.ckpt '
@@ -40,9 +40,9 @@ dataset_configs = {
 				'ckpt': '--network.checkpoint "results/checkpoints/cifar100_res18_acc78.20.ckpt" '
 						'--network.pretrained True ',
 			},
-			'particul': {
+			'iode': {
 				'arch': 'configs/networks/particul.yml',
-				'ckpt': '--network.checkpoint "results/cifar100_particul_net_particul_e200_lr0.0005_p4k3/best.ckpt" '
+				'ckpt': '--network.checkpoint "results/cifar100_particul/best.ckpt" '
 						'--network.pretrained True '
 						'--network.backbone.name resnet18_32x32 '
 						'--network.backbone.checkpoint results/checkpoints/cifar100_res18_acc78.20.ckpt '
@@ -71,9 +71,9 @@ dataset_configs = {
 				'ckpt': '--network.checkpoint "results/checkpoints/mnist_lenet_acc99.60.ckpt" '
 						'--network.pretrained True ',
 			},
-			'particul': {
+			'iode': {
 				'arch': 'configs/networks/particul.yml',
-				'ckpt': '--network.checkpoint "results/mnist_particul_net_particul_e200_lr0.0005_p4k3/best.ckpt" '
+				'ckpt': '--network.checkpoint "results/mnist_particul/best.ckpt" '
 						'--network.pretrained True '
 						'--network.backbone.name lenet '
 						'--network.backbone.checkpoint results/checkpoints/mnist_lenet_acc99.60.ckpt '
@@ -102,7 +102,7 @@ dataset_configs = {
 				'ckpt': '--network.checkpoint "results/checkpoints/imagenet_res50_acc76.10.pth" '
 						'--network.pretrained True ',
 			},
-			'particul': {
+			'iode': {
 				'arch': 'configs/networks/particul.yml',
 				'ckpt': '--network.checkpoint "results/imagenet_particul/best.ckpt" '
 						'--network.pretrained True '
@@ -142,7 +142,7 @@ method_config = {
 	'dice': {'network': 'standard', 'postprocessor': 'configs/postprocessors/dice.yml'},
 	'react': {'network': 'react', 'postprocessor': 'configs/postprocessors/react.yml'},
 	'vim': {'network': 'vim', 'postprocessor': 'configs/postprocessors/vim.yml'},
-	'particul': {'network': 'particul', 'postprocessor': 'configs/postprocessors/particul.yml'}
+	'iode': {'network': 'iode', 'postprocessor': 'configs/postprocessors/particul.yml'}
 }
 
 benchmark_scenari = {
