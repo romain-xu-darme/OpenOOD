@@ -160,7 +160,7 @@ benchmark_scenari = {
 	},
 	'rotate_back': {
 		'perturbation': 'rotate',
-		'values': "'[180, 210, 240, 270, 300, 320, 340, 350, 360]'",
+		'values': "'[180, 210, 230, 250, 270, 290, 310, 320, 330, 340, 360]'",
 	},
 	'brightness': {
 		'perturbation': 'brightness',
