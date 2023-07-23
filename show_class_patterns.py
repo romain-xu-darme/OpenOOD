@@ -11,9 +11,9 @@ def get_args() -> argparse.Namespace:
 						metavar='<path>',
 						help='Directory of class pattern images')
 	parser.add_argument('--index',
-						type=int, nargs='+',
-						metavar='<index>',
-						help='Class index')
+						type=int, nargs=2,
+						metavar=('<min>', '<max>'),
+						help='Class index range')
 	parser.add_argument('--output',
 						required=True,
 						type=str,
@@ -26,10 +26,10 @@ def get_args() -> argparse.Namespace:
 if __name__ == '__main__':
 	args = get_args()
 	graph = pydot.Dot('samples', graph_type='digraph', compound=True)
-	for index in args.index:
+	for index in range(args.index[0], args.index[1]):
 		pidx = 0
 		samples = pydot.Cluster(graph_name=f"cluster_class{index}",
-								label=f"<<B>Training examples for class {index}</B>>",
+								label=f"<<B>Training examples for class {index+1}</B>>",
 								fontsize=20,
 								labelloc="t"
 								)
@@ -38,16 +38,16 @@ if __name__ == '__main__':
 				name=f'pattern_{index}_{pidx}',
 				fontsize=20,
 				shape="box",
-				label=f"<<B>Pattern {pidx}</B>>",
-				height=2.5, width=2.1, imagepos="tc", labelloc="b",
+				label=f"<Pattern {3 - pidx}>",
+				height=2.4, width=2.1, imagepos="tc", labelloc="b",
 				image=os.path.join(args.dir, f'class_{index:03d}_p{pidx}.png')
 			))
 			pidx += 1
 		graph.add_subgraph(samples)
 	# Invisible connection to stack clusters
-	for iidx in range(len(args.index)-1):
+	for index in range(args.index[0], args.index[1] - 2):
 		graph.add_edge(pydot.Edge(
-				src=f"pattern_{args.index[iidx]}_0", dst=f"pattern_{args.index[iidx+1]}_0",
+				src=f"pattern_{index}_0", dst=f"pattern_{index+2}_0",
 				dir="none",
 				style='invis',
 		))
