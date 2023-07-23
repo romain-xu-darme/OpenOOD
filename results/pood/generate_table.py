@@ -20,12 +20,13 @@ def get_args() -> argparse.Namespace:
 	return parsed_args
 
 
+
 methods = ['msp', 'odin', 'mds', 'gram', 'ebo', 'gradnorm',
-		   'react', 'mls', 'klm', 'vim', 'knn', 'dice', 'particul']
+		   'react', 'mls', 'klm', 'vim', 'knn', 'dice', 'fnrd', 'iode']
 methods_nice = ['MSP', 'ODIN', 'MDS', 'Gram', 'EBO', 'GradNorm',
-				'ReAct', 'MaxLogit', 'KLM', 'ViM', 'KNN', 'DICE', 'IODE']
-scenari = ['noise', 'blur', 'rotate_forth', 'rotate_back', 'brightness']
-datasets = ['MNIST', 'CIFAR10', 'CIFAR100']
+				'ReAct', 'MaxLogit', 'KLM', 'ViM', 'KNN', 'DICE', 'FNRD', 'CODE']
+scenari = ['noise', 'blur', 'brightness', 'rotate_forth', 'rotate_back']
+datasets = ['CIFAR10', 'CIFAR100', 'imagenet','MNIST']
 
 scenari_short = {'noise': 'Noise $\\downarrow$',
 				 'blur': 'Blur $\\downarrow$',
@@ -46,17 +47,26 @@ scenari_magnitude_labels = {'noise': 'Noise ratio', 'blur': '\u03C3', 'brightnes
 def generate_table(output: str):
 	# Prepare table header
 	table = "\\begin{table*}\n" \
-			"\t\\caption{\\textbf{Comparison of OoD methods on our perturbation benchmark.}}\n" \
-			"\t\\label{table:pood}\n" \
+			"\t\\caption{\\textbf{Comparison of OoD methods on our perturbation benchmark.} " \
+			"For each perturbation, $\\uparrow$ (resp. $\\downarrow$) indicates that the average confidence " \
+			"on the perturbed dataset should increase (resp. decrease) with $\\alpha$, therefore that the sign " \
+			"of the Spearman rank correlation coefficient should be positive (resp. negative). Results in " \
+			"\\textcolor{red}{red} indicate either a weak correlation (absolute value lower than 0.3) or an " \
+			"unexpected sign of the correlation coefficient, \\eg the average Gram confidence score increases " \
+			"with the noise ratio on CIFAR100 ($r_s=1.0$) when it should be decreasing. " \
+			"Results in \\textbf{bold} indicate a strong expected correlation (absolute value greater than 0.9). " \
+			"The last column represents the average correlation score, taking into account the expected sign of the" \
+			" correlation (results with $^*$ are partial average values).}\n" \
+			"\t\\label{tab:pood}\n" \
 			"\t\\centering \n" \
 			"\t{\\renewcommand\\baselinestretch{1.3}\\selectfont \\resizebox{\\textwidth}{!}{ \n" \
 			"\t\\begin{tabular}{@{\\hskip 8pt}l@{\\hskip 6pt}"
 	for _ in datasets:
 		table += f"|@{{\\hskip 6pt}}{'c' * len(scenari)}@{{\\hskip 6pt}}"
-	table += "}\n\t\\toprule\n\t"
+	table += "|c}\n\t\\toprule\n\t"
 	for dataset in datasets[:-1]:
 		table += f"& \\multicolumn{{{len(scenari)}}}{{c@{{\\hskip 6pt}}|@{{\\hskip 6pt}}}}{{{dataset}}}\n"
-	table += f"& \\multicolumn{{{len(scenari)}}}{{c}}{{{datasets[-1]}}}\n"
+	table += f"& \\multicolumn{{{len(scenari)}}}{{c}}{{{datasets[-1]}}} & Avg.\n"
 	table += "\\\\ \n\t  "
 	for _ in datasets:
 		for scenario in scenari:
@@ -64,29 +74,40 @@ def generate_table(output: str):
 	table += "\\\\ \n\t  "
 
 	for method, mname in zip(methods, methods_nice):
-		if method == 'particul':
-			table += f"\t\\rowcolor{{NEED_TRAIN}} \\sun~ {mname}"
-		else:
-			table += f"\t\\rowcolor{{NO_TRAIN}} \\SnowflakeChevron~ {mname}"
+		table += f"\t{mname}"
+		avg = 0
+		nvalues = 0
 		for dataset in datasets:
 			for scenario in scenari:
 				# Update Spearman table
 				found = False
 				with open('pood_results.csv', 'r') as csvfile:
 					reader = csv.DictReader(csvfile)
+
 					for row in reader:
 						if row['dataset'] == dataset.lower() \
 								and row['method'] == method and row['perturbation'] == scenario:
 							sr = float(row['Spearman'])
-							if (sr > -0.3 and scenari_polarity[scenario] == 'negative') or \
-									(sr < 0.3 and scenari_polarity[scenario] == 'positive'):
+							if (sr >= -0.3 and scenari_polarity[scenario] == 'negative') or \
+									(sr <= 0.3 and scenari_polarity[scenario] == 'positive'):
 								table += f" & \\textcolor{{red}}{{{sr}}}"
+							elif abs(sr) >= 0.9:
+								table += f" & \\textbf{{{sr}}}"
 							else:
 								table += f" & {sr}"
+							if scenari_polarity[scenario] == 'negative':
+								avg -= sr
+								nvalues += 1
+							else:
+								avg += sr
+								nvalues += 1
 							found = True
-				assert found, f"Could not find entry {scenario}, {dataset.lower()}, {method}"
-
-		table += "\\\\ \n"
+				if not found:
+					table += " & \\clock"
+		if nvalues == 0:
+			table += f" & \\clock \\\\ \n"
+		else:
+			table += f" & {avg/nvalues:.2f} \\\\ \n"
 	table += "\\bottomrule \n\t\\end{tabular}}\\par}\n\\end{table*}"
 	with open(output, 'w') as fout:
 		fout.write(table)
@@ -99,6 +120,8 @@ def generate_graphs(dir: str):
 			if scenario != 'Rotate':
 				for midx, (method, mname) in enumerate(zip(methods, methods_nice)):
 					path = os.path.join(scenario.lower(), dataset.lower(), method, 'pood.csv')
+					if not os.path.exists(path):
+						continue
 					with open(path, 'r') as csvfile:
 						reader = csv.DictReader(csvfile)
 						magnitudes, avg_confidences = [], []
@@ -113,12 +136,12 @@ def generate_graphs(dir: str):
 							if row['dataset'] == dataset.lower() \
 									and row['method'] == method and row['perturbation'] == scenario.lower():
 								sr = float(row['Spearman'])
-								if (sr > -0.3 and scenari_polarity[scenario.lower()] == 'negative') or \
-										(sr < 0.3 and scenari_polarity[scenario.lower()] == 'positive'):
+								if (sr >= -0.3 and scenari_polarity[scenario.lower()] == 'negative') or \
+										(sr <= 0.3 and scenari_polarity[scenario.lower()] == 'positive'):
 									color = 'tab:red'
 								else:
 									color = 'tab:blue'
-					axs[midx][sc_idx].text(0.3, 0.5, f'Sr: {sr}', fontsize=10,
+					axs[midx][sc_idx].text(0.3, 0.5, rf'$s_r$: {sr}', fontsize=10,
 										   bbox=dict(facecolor='white', alpha=0.5),
 										   horizontalalignment='center', verticalalignment='center',
 										   transform=axs[midx][sc_idx].transAxes)
@@ -134,6 +157,8 @@ def generate_graphs(dir: str):
 					for direction in ['rotate_forth', 'rotate_back']:
 						magnitudes, avg_confidences = [], []
 						path = os.path.join(direction, dataset.lower(), method, 'pood.csv')
+						if not os.path.exists(path):
+							continue
 						with open(path, 'r') as csvfile:
 							reader = csv.DictReader(csvfile)
 							for row in reader:
@@ -147,20 +172,20 @@ def generate_graphs(dir: str):
 								if row['dataset'] == dataset.lower() \
 										and row['method'] == method and row['perturbation'] == direction:
 									sr = float(row['Spearman'])
-									if (sr > -0.3 and scenari_polarity[direction] == 'negative') or \
-											(sr < 0.3 and scenari_polarity[direction] == 'positive'):
+									if (sr >= -0.3 and scenari_polarity[direction] == 'negative') or \
+											(sr <= 0.3 and scenari_polarity[direction] == 'positive'):
 										color = 'tab:red'
 									else:
 										color = 'tab:blue'
 						if direction == 'rotate_back':
-							axs[midx][sc_idx].text(0.7, 0.5, f'Sr: {sr}', fontsize=10,
+							axs[midx][sc_idx].text(0.7, 0.5, rf'$s_r$: {sr}', fontsize=10,
 												   bbox=dict(facecolor='white', alpha=0.5),
 												   horizontalalignment='center', verticalalignment='center',
 												   transform=axs[midx][sc_idx].transAxes)
 							axs[midx][sc_idx].plot(magnitudes, avg_confidences, label=mname, color=color)
 							axs[midx][sc_idx].legend(loc=1)
 						else:
-							axs[midx][sc_idx].text(0.3, 0.5, f'Sr: {sr}', fontsize=10,
+							axs[midx][sc_idx].text(0.3, 0.5, rf'$s_r$: {sr}', fontsize=10,
 												   bbox=dict(facecolor='white', alpha=0.5),
 												   horizontalalignment='center', verticalalignment='center',
 												   transform=axs[midx][sc_idx].transAxes)
