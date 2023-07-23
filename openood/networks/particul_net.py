@@ -70,6 +70,11 @@ class ParticulNet(nn.Module):
                 conf = conf.mul(torch.softmax(logits, dim=1))
                 # Sum across classes
                 conf = conf.sum(dim=1)
+            elif self.mode == "average":
+                # Average across detectors
+                conf = conf.mean(dim=2)
+                # Average across classes
+                conf = conf.mean(dim=1)
             else:  # Most probable class only
                 # For each element of the batch, find index of most probable class
                 class_idx = logits.argmax(dim=1, keepdim=True)  # Shape N x 1
